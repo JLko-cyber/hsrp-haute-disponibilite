@@ -1,0 +1,69 @@
+# ============================================================
+# .gitignore - Projet HSRP Haute Disponibilite
+# TP BTS SIO - IRIS Paris
+# ============================================================
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+*.egg-info/
+dist/
+build/
+
+# ----- Environnements virtuels -----
+.env
+.env.local
+*.env
+
+# ----- Résultats de tests -----
+results/
+logs/
+*.log
+test_results/
+captures/
+
+# ----- Fichiers systeme -----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ----- IDE / Editeurs -----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# ----- Fichiers Cisco sensibles -----
+# (ne pas versionner les configs avec mots de passe en clair)
+*_running-config.txt
+*_startup-config.txt
+*_secrets.txt
+credentials.txt
+passwords.txt
+
+# ----- Archives -----
+*.zip
+*.tar.gz
+*.rar
+*.7z
