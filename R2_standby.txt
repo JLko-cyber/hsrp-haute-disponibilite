@@ -1,0 +1,118 @@
+! ============================================================
+! CONFIGURATION CISCO IOS - R2 (ROUTEUR STANDBY HSRP)
+! TP BTS SIO - IRIS Paris - Protocole HSRP
+! Auteur : Julien Lesnichenko
+! Date   : 2024-2025
+! ============================================================
+
+version 15.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+
+!
+hostname R2
+!
+boot-start-marker
+boot-end-marker
+!
+! ============================================================
+! SECURITE
+! ============================================================
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+no aaa new-model
+!
+! ============================================================
+! INTERFACE LAN - GigabitEthernet0/0
+! Connexion au réseau local 192.168.1.0/24
+! ============================================================
+interface GigabitEthernet0/0
+ description LAN - Réseau local 192.168.1.0/24
+ ip address 192.168.1.2 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+ !
+ ! --- Configuration HSRP Groupe 1 ---
+ standby version 1
+ standby 1 ip 192.168.1.254
+ standby 1 priority 100
+ standby 1 timers 1 3
+ standby 1 authentication md5 key-string HSRP_KEY_TP
+ !
+ ! Note : PAS de "preempt" sur R2
+ ! R2 ne reprend PAS le rôle Active si R1 revient
+ !
+ no shutdown
+!
+! ============================================================
+! INTERFACE WAN - GigabitEthernet0/1
+! Connexion vers le réseau externe / Internet
+! ============================================================
+interface GigabitEthernet0/1
+ description WAN - Connexion externe (secours)
+ ip address 10.0.0.5 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+ no shutdown
+!
+! ============================================================
+! INTERFACE LIAISON INTER-ROUTEURS - GigabitEthernet0/2
+! Lien direct R2 <-> R1 pour communication HSRP
+! ============================================================
+interface GigabitEthernet0/2
+ description Liaison inter-routeurs R2-R1
+ ip address 172.16.0.2 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+ no shutdown
+!
+! ============================================================
+! ROUTAGE
+! ============================================================
+ip route 0.0.0.0 0.0.0.0 10.0.0.6
+!
+! ============================================================
+! SERVICES
+! ============================================================
+no ip http server
+no ip http secure-server
+!
+! ============================================================
+! LOGGING ET DIAGNOSTIC
+! ============================================================
+logging buffered 51200 warnings
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+!
+line vty 0 4
+ password cisco
+ login
+ transport input telnet ssh
+!
+! ============================================================
+! COMPORTEMENT EN CAS DE FAILOVER :
+!
+! Quand R1 tombe :
+!   1. R2 ne reçoit plus les paquets HSRP Hello de R1
+!   2. Après 3 secondes (dead timer), R2 passe Active
+!   3. R2 prend en charge l'IP virtuelle 192.168.1.254
+!   4. Trafic des clients redirigé automatiquement vers R2
+!
+! Quand R1 revient :
+!   1. R1 envoie des paquets Hello avec priorité 110
+!   2. Grâce à "preempt" sur R1, il reprend le rôle Active
+!   3. R2 repasse en mode Standby
+!
+! VERIFICATION :
+!   show standby
+!   show standby brief
+!   show standby GigabitEthernet0/0 1
+! ============================================================
+end
