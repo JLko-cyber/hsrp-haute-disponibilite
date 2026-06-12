@@ -1,0 +1,105 @@
+! ============================================================
+! CONFIGURATION CISCO IOS - R1 (ROUTEUR ACTIF HSRP)
+! TP BTS SIO - IRIS Paris - Protocole HSRP
+! Auteur : Julien Lesnichenko
+! Date   : 2024-2025
+! ============================================================
+
+version 15.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+
+!
+hostname R1
+!
+boot-start-marker
+boot-end-marker
+!
+! ============================================================
+! SECURITE
+! ============================================================
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+no aaa new-model
+!
+! ============================================================
+! INTERFACE LAN - GigabitEthernet0/0
+! Connexion au réseau local 192.168.1.0/24
+! ============================================================
+interface GigabitEthernet0/0
+ description LAN - Réseau local 192.168.1.0/24
+ ip address 192.168.1.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+ !
+ ! --- Configuration HSRP Groupe 1 ---
+ standby version 1
+ standby 1 ip 192.168.1.254
+ standby 1 priority 110
+ standby 1 preempt
+ standby 1 timers 1 3
+ standby 1 track GigabitEthernet0/1 10
+ standby 1 authentication md5 key-string HSRP_KEY_TP
+ !
+ no shutdown
+!
+! ============================================================
+! INTERFACE WAN - GigabitEthernet0/1
+! Connexion vers le réseau externe / Internet
+! ============================================================
+interface GigabitEthernet0/1
+ description WAN - Connexion externe
+ ip address 10.0.0.1 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+ no shutdown
+!
+! ============================================================
+! INTERFACE LIAISON INTER-ROUTEURS - GigabitEthernet0/2
+! Lien direct R1 <-> R2 pour communication HSRP
+! ============================================================
+interface GigabitEthernet0/2
+ description Liaison inter-routeurs R1-R2
+ ip address 172.16.0.1 255.255.255.252
+ duplex auto
+ speed auto
+ media-type rj45
+ no shutdown
+!
+! ============================================================
+! ROUTAGE
+! ============================================================
+ip route 0.0.0.0 0.0.0.0 10.0.0.2
+!
+! ============================================================
+! SERVICES
+! ============================================================
+no ip http server
+no ip http secure-server
+!
+! ============================================================
+! LOGGING ET DIAGNOSTIC
+! ============================================================
+logging buffered 51200 warnings
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+!
+line vty 0 4
+ password cisco
+ login
+ transport input telnet ssh
+!
+! ============================================================
+! VERIFICATION HSRP - commandes utiles :
+!   show standby
+!   show standby brief
+!   show standby GigabitEthernet0/0 1
+!   debug standby events
+! ============================================================
+end
